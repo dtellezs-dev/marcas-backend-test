@@ -1,40 +1,60 @@
 using Microsoft.EntityFrameworkCore;
 using MarcasApi.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure DbContext with PostgreSQL provider using ConnectionStrings:DefaultConnection
-// In Docker Compose this will be provided via env var: ConnectionStrings__DefaultConnection
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
-    ?? "Host=localhost;Database=marcasdb;Username=postgres;Password=postgres";
+// Connection string
+var connectionString = "Host=db;Database=marcasdb;Username=postgres;Password=postgres";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Add controllers
 builder.Services.AddControllers();
-
-// Add minimal OpenAPI for convenience
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "Marcas API", Version = "v1" });
+});
 
 var app = builder.Build();
 
-// Ensure DB created on startup in development (in production prefer migrations)
-using (var scope = app.Services.CreateScope())
+// Database initialization
+try
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // IMPORTANT: In production use proper migrations. For demo, we ensure DB and seed.
+
+    Console.WriteLine("Waiting for database...");
+    await Task.Delay(5000);
+
     db.Database.EnsureCreated();
+    Console.WriteLine("Database ready!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Database warning: {ex.Message}");
 }
 
-if (app.Environment.IsDevelopment())
+// CONFIGURACIÓN MÁS EXPLÍCITA DE SWAGGER
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Marcas API v1");
+    c.RoutePrefix = "swagger"; // Asegura que esté en /swagger
+    c.DisplayRequestDuration();
+});
 
 app.UseRouting();
 app.MapControllers();
+
+// Endpoints mínimos
+app.MapGet("/", () => Results.Redirect("/swagger")); // Redirige a Swagger
+app.MapGet("/health", () => "Healthy");
+app.MapGet("/test", () => "API is working!");
+
+Console.WriteLine("pplication started!");
+Console.WriteLine("Swagger available at: http://localhost:5000/swagger");
+Console.WriteLine("Home available at: http://localhost:5000/");
+Console.WriteLine("Health available at: http://localhost:5000/health");
 
 app.Run();
