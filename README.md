@@ -33,7 +33,7 @@ Proyecto de ejemplo que cumple con los requisitos:
 ## Ejecutar con Docker Compose
 1. Desde la raíz del proyecto ejecutar:
    - `docker compose up --build`
-2. La API quedará disponible en http://localhost:5000 (configurable)
+2. La API quedará disponible en http://localhost:8080 (configurable)
 
 ## Ejecutar pruebas
 - `dotnet test`
