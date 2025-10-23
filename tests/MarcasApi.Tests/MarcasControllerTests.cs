@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;  // ? ESTE FALTA
 using Microsoft.EntityFrameworkCore;
 using MarcasApi.Controllers;
 using MarcasApi.Data;
